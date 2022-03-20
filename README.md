@@ -5,6 +5,6 @@ Robo 🤖 news aggregator powered by NLP topic clustering. Headlines without the
 ## 📰 News Sources
 
 - News API (https://newsapi.org/)
-- ...
+- Yahoo Finance API (https://www.yahoofinanceapi.com/)
 
 ## ▶️ Usage
