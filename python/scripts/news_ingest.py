@@ -7,6 +7,7 @@ Creates needed index if ES has not been first initialized
 """
 
 import coloredlogs, logging
+from datetime import date
 from elasticsearch import helpers
 from elasticsearch.client import Elasticsearch
 import hashlib
@@ -43,16 +44,21 @@ def ingest_articles(es) -> List[Dict]:
     try:
         params = {
             "access_key": api_key,
-            "sources": ",".join(["us", "en"]),
+            "sources": 'en',
+            "countries": 'us',
             "sort": "popularity",
             "limit": 100,
+            "date": '2022-01-01,' + date.today().strftime("%Y-%m-%d")
         }
         result = requests.get(url, params=params)
 
-        if "error" in result:
+        if "error" in result.json():
+            logging.error(result.json())
             raise ValueError("Returned response has encountered an error")
         else:
             logger.info("Success")
+            count = len(result.json()['data']) 
+            logger.info(f'{count} articles returned')
             logger.info("Loading to elasticsearch")
             
             all_articles = result.json()['data']
