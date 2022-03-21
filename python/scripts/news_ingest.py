@@ -37,49 +37,64 @@ def connect_to_es(check_indices: bool = False):
     return es
 
 
-def ingest_articles(es) -> List[Dict]:
-    url = cfg["MEDIASTACK_URL"]
-    api_key = cfg["MEDIASTACK_TOKEN"]
-
+def ingest_articles(es, url, api_key, offset: int = 0, remaining: int = None) -> List[Dict]:
     try:
         params = {
             "access_key": api_key,
-            "sources": 'en',
+            "languages": 'en',
             "countries": 'us',
             "sort": "popularity",
             "limit": 100,
-            "date": '2022-01-01,' + date.today().strftime("%Y-%m-%d")
+            "offset": offset,
+            "date": date.today().strftime("%Y-%m-%d")
         }
         result = requests.get(url, params=params)
+        result = result.json()
 
-        if "error" in result.json():
-            logging.error(result.json())
+        if "error" in result:
+            logging.error(result)
             raise ValueError("Returned response has encountered an error")
         else:
             logger.info("Success")
-            count = len(result.json()['data']) 
-            logger.info(f'{count} articles returned')
-            logger.info("Loading to elasticsearch")
             
-            all_articles = result.json()['data']
+            # calculate further values for fetching more data
+            count = len(result['data']) 
+            total = result['pagination']['total']
+            if remaining is None:
+                remaining = total - count
+            else:
+                remaining -= count
+
+            logger.info(f'{count} articles returned')
+            logging.info(f'{remaining} articles remaining')
+            logger.info("Loading to elasticsearch")
+
+            all_articles = result['data']
             article_lst = [
                 {
                     "_index": "raw_articles",
                     "_op_type": "index",
                     "_id": str(hashlib.md5(article_data['title'].encode('utf-8')).hexdigest()),
-                    "_source": article_data,
+                    "_source": {**article_data, "popularity": (i + offset) / total},
                 }
-                for article_data in all_articles
+                for i, article_data in enumerate(all_articles)
             ]
             helpers.bulk(es, article_lst)
-
-            return all_articles
+            logger.info('Done')
 
     except ValueError as e:
         logging.error(e)
         raise(e)
 
+    if remaining == 0:
+        return
+    else:
+        ingest_articles(es, url, api_key, offset + 100, remaining)
+
 
 if __name__ == "__main__":
     es = connect_to_es()
-    ingest_articles(es)
+
+    url = cfg["MEDIASTACK_URL"]
+    api_key = cfg["MEDIASTACK_TOKEN"]
+    ingest_articles(es, url, api_key)
