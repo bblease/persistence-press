@@ -26,6 +26,15 @@ logging.info("Loaded config " + str(dict(cfg)))
 
 
 def connect_to_es(check_indices: bool = False):
+    """
+    Connect to ElasticSearch
+
+    Parameters:
+        check_indicies - check if the indexes exist, create if not
+
+    Returns:
+        the connected ES instance
+    """
     es = Elasticsearch(
         [{"scheme": "http", "host": cfg["ES_HOST"], "port": int(cfg["ES_PORT"])}]
     )
@@ -37,18 +46,34 @@ def connect_to_es(check_indices: bool = False):
     return es
 
 
-def ingest_articles(es, url, api_key, offset: int = 0, remaining: int = None) -> List[Dict]:
+def ingest_articles(
+    es, news_api_url, news_api_key, offset: int = 0, remaining: int = None
+) -> List[Dict]:
+    """
+    Pull articles from Mediastack (currently) and upload to ES
+
+    Parameters:
+        news_api_url - the url for the News api (e.g. NewsAPI or MediaStack)
+        news_api_key - the API key needed for API authentication
+        offset - the pagination offset for larger article sets
+        remaining - the number of articles remaining in the set
+
+    Notes:
+        remaining is initially None and populated with the pagination results
+        from Mediastack
+
+    """
     try:
         params = {
-            "access_key": api_key,
-            "languages": 'en',
-            "countries": 'us',
+            "access_key": news_api_key,
+            "languages": "en",
+            "countries": "us",
             "sort": "popularity",
             "limit": 100,
             "offset": offset,
-            "date": date.today().strftime("%Y-%m-%d")
+            "date": date.today().strftime("%Y-%m-%d"),
         }
-        result = requests.get(url, params=params)
+        result = requests.get(news_api_url, params=params)
         result = result.json()
 
         if "error" in result:
@@ -56,40 +81,42 @@ def ingest_articles(es, url, api_key, offset: int = 0, remaining: int = None) ->
             raise ValueError("Returned response has encountered an error")
         else:
             logger.info("Success")
-            
+
             # calculate further values for fetching more data
-            count = len(result['data']) 
-            total = result['pagination']['total']
+            count = len(result["data"])
+            total = result["pagination"]["total"]
             if remaining is None:
                 remaining = total - count
             else:
                 remaining -= count
 
-            logger.info(f'{count} articles returned')
-            logging.info(f'{remaining} articles remaining')
+            logger.info(f"{count} articles returned")
+            logging.info(f"{remaining} articles remaining")
             logger.info("Loading to elasticsearch")
 
-            all_articles = result['data']
+            all_articles = result["data"]
             article_lst = [
                 {
                     "_index": "raw_articles",
                     "_op_type": "index",
-                    "_id": str(hashlib.md5(article_data['title'].encode('utf-8')).hexdigest()),
+                    "_id": str(
+                        hashlib.md5(article_data["title"].encode("utf-8")).hexdigest()
+                    ),
                     "_source": {**article_data, "popularity": (i + offset) / total},
                 }
                 for i, article_data in enumerate(all_articles)
             ]
             helpers.bulk(es, article_lst)
-            logger.info('Done')
+            logger.info("Done")
 
     except ValueError as e:
         logging.error(e)
-        raise(e)
+        raise (e)
 
     if remaining == 0:
         return
     else:
-        ingest_articles(es, url, api_key, offset + 100, remaining)
+        ingest_articles(es, news_api_url, news_api_key, offset + 100, remaining)
 
 
 if __name__ == "__main__":
