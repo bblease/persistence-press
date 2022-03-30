@@ -9,6 +9,7 @@ Creates needed index if ES has not been first initialized
 import argparse
 import coloredlogs, logging
 from datetime import date, datetime
+from dotenv import dotenv_values
 from elasticsearch import helpers
 from elasticsearch.client import Elasticsearch
 import hashlib
@@ -16,7 +17,6 @@ import json
 import requests
 from typing import List, Dict
 
-from dotenv import dotenv_values
 
 logger = logging.getLogger(__name__)
 coloredlogs.install(level="DEBUG")
@@ -36,6 +36,7 @@ def connect_to_es(check_indices: bool = False):
     Returns:
         the connected ES instance
     """
+    logging.info('Connecting to elasticsearch')
     es = Elasticsearch(
         [{"scheme": "http", "host": cfg["ES_HOST"], "port": int(cfg["ES_PORT"])}]
     )
