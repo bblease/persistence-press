@@ -36,7 +36,7 @@ def connect_to_es(check_indices: bool = False):
     Returns:
         the connected ES instance
     """
-    logging.info('Connecting to elasticsearch')
+    logging.info("Connecting to elasticsearch")
     es = Elasticsearch(
         [{"scheme": "http", "host": cfg["ES_HOST"], "port": int(cfg["ES_PORT"])}]
     )
@@ -49,13 +49,13 @@ def connect_to_es(check_indices: bool = False):
 
 
 def ingest_articles(
-    es, 
-    news_api_url, 
-    news_api_key, 
-    offset: int = 0, 
+    es,
+    news_api_url,
+    news_api_key,
+    offset: int = 0,
     remaining: int = None,
     start_date: str = None,
-    end_date: str = None
+    end_date: str = None,
 ) -> List[Dict]:
     """
     Pull articles from Mediastack (currently) and upload to ES
@@ -71,8 +71,8 @@ def ingest_articles(
         from Mediastack
 
     """
-    
-    if start_date is None: 
+
+    if start_date is None:
         start_date = date.today().strftime("%Y-%m-%d")
 
     date_range = [start_date]
@@ -87,7 +87,7 @@ def ingest_articles(
             "sort": "popularity",
             "limit": 100,
             "offset": offset,
-            "date": ','.join(date_range)
+            "date": ",".join(date_range),
         }
         result = requests.get(news_api_url, params=params)
         result = result.json()
@@ -136,9 +136,15 @@ def ingest_articles(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Mediastack scraper')
-    parser.add_argument('--start', required=False, help='start date for collection with format YYYY-MM-DD')
-    parser.add_argument('--end', required=False, help='end date for collection YYYY-MM-DD')
+    parser = argparse.ArgumentParser(description="Mediastack scraper")
+    parser.add_argument(
+        "--start",
+        required=False,
+        help="start date for collection with format YYYY-MM-DD",
+    )
+    parser.add_argument(
+        "--end", required=False, help="end date for collection YYYY-MM-DD"
+    )
 
     args = parser.parse_args()
 
