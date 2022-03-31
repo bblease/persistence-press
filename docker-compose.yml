@@ -33,6 +33,15 @@ services:
       - 5601:5601
     depends_on:
       - elasticsearch
+  attu:
+    container_name: attu
+    image: zilliz/attu:latest
+    environment:
+      - HOST_URL=http://localhost:8000
+      - MILVUS_URL=http://localhost:19530
+    ports:
+      - 8000:3000
+    restart: on-failure
 
 volumes:
   elasticsearch-data:

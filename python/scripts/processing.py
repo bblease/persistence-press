@@ -11,9 +11,9 @@ import coloredlogs, logging
 from datetime import date, datetime
 from dotenv import dotenv_values
 from elasticsearch.client import Elasticsearch
+import numpy as np
 from pymilvus import (
     connections,
-    list_collections,
     FieldSchema,
     CollectionSchema,
     DataType,
@@ -98,7 +98,7 @@ def get_vectors_today(es, milvus, publish_date: str = None):
     
     vectors = []
     for i, doc in enumerate(nlp.pipe(all_titles, n_process=4)):
-        vectors += [doc.vector]
+        vectors += [np.array(doc.vector, dtype=np.float32)]
         # TODO - extract NER and add to ES
 
     vector_ids = [
@@ -109,7 +109,7 @@ def get_vectors_today(es, milvus, publish_date: str = None):
 
     logging.info('Inserting vector data')
     Collection('title_embeddings').insert(
-        [vectors, vector_ids]
+        [vector_ids, vectors]
     )
     logging.info('Done')
 
