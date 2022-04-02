@@ -1,6 +1,6 @@
-<img src="/media/embedded_logo.svg" height=150/>
+<p align="center"><img src="/media/embedded_logo_light.svg" height=200/></p>
 
-Robo 🤖 news aggregator powered by NLP topic clustering. Headlines without the bloat. A clean, news-driven website designed to provide users without bloated design.
+Robo 🤖 news aggregator powered by NLP topic clustering. Headlines without the bloat. A clean, news-driven website designed to provide users news without bloated design.
 
 ## 📰 News Sources
 
@@ -34,4 +34,4 @@ see the frontend directory readme for further guides
 
 The goal of the Persistence Press architecture is to allow swappable news ingest and modeling with Kafka as a central message broker. Clustering will also be integrated as a swappable service down the line
 
-![Architecture](https://github.com/bblease/persistence-press/blob/master/keyscreens/Architecture.png)
+![Architecture](https://github.com/bblease/persistence-press/blob/master/media/Architecture.png)
