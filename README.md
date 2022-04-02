@@ -34,4 +34,4 @@ see the frontend directory readme for further guides
 
 The goal of the Persistence Press architecture is to allow swappable news ingest and modeling with Kafka as a central message broker. Clustering will also be integrated as a swappable service down the line
 
-![Architecture](https://github.com/bblease/persistence-press/blob/master/keyscreens/Architecture_diagram.png)
+![Architecture](https://github.com/bblease/persistence-press/blob/master/keyscreens/Architecture.png)
